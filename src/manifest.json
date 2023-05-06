@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+
+  "name": "Chrome Regex Search - Personal",
+  "description": "An extension for Regex Search in lieu of Chrome's CTRL+F",
+  "version": "1.0.8",
+  "icons": {
+    "16": "icons/icons_16.png",
+    "24": "icons/icons_24.png",
+    "32": "icons/icons_32.png",
+    "48": "icons/icons_48.png",
+    "64": "icons/icons_64.png",
+    "72": "icons/icons_72.png",
+    "96": "icons/icons_96.png",
+    "128": "icons/icons_128.png",
+    "256": "icons/icons_256.png"
+  },
+  "action": {
+    "default_icon": "icons/icons_32.png",
+    "default_popup": "popup.html",
+    "browser_style": true
+  },
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [ "http://*/*", "https://*/*", "file://*/*" ],
+      "js": [ "js/content.js" ]
+    }
+  ],
+  "commands": {
+    "toggle-extension": {
+      "description": "Toggle Extension",
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "MacCtrl+Shift+F"
+      }
+    }
+  },
+  "options_page": "options.html"
+}
