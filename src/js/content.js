@@ -10,10 +10,12 @@ var DEFAULT_HIGHLIGHT_COLOR = '#ffff00';
 var DEFAULT_SELECTED_COLOR = '#2547da';
 var DEFAULT_TEXT_COLOR = '#000000';
 var DEFAULT_CASE_INSENSITIVE = false;
+var DEFAULT_SEARCH_TYPE = "Default";
 /*** CONSTANTS ***/
 
 /*** VARIABLES ***/
 var searchInfo;
+var searching = false;
 /*** VARIABLES ***/
                      
 /*** LIBRARY FUNCTIONS ***/
@@ -62,45 +64,27 @@ function isExpandable(node) {
 }
 
 /* Highlight all text that matches regex */
-function highlight(regex, regexString, highlightColor, selectedColor, textColor, maxResults) {
-  let regexList = [regexString];
-  let options = {
-    method: 'GET',
-    headers: { 'x-api-key': '/cUeYXJRNyCaMH7FDK5G9w==Xh7I4HJRi9GstE91' }
-  }
-  let url = 'https://api.api-ninjas.com/v1/thesaurus?word=' + regexString;
-  fetch(url,options)
-        .then(res => res.json()) // parse response as JSON
-        .then(data => {
-          if (data && data.synonyms) {
-            regexList = regexList.concat(data.synonyms);
-            console.log(regexList);
-          }
-        })
-        .catch(err => {
-            console.log(`error ${err}`)
-        });
+function highlight(regex, highlightColor, selectedColor, textColor, maxResults) {
   function highlightRecursive(node) {
     if(searchInfo.length >= maxResults){
       return;
     }
     if (isTextNode(node)) {
-      for (const reg of regexList){
-        var index = node.data.search(reg);
-        if (index >= 0 && node.data.length > 0) {
-          var matchedText = node.data.match(reg)[0];
-          var matchedTextNode = node.splitText(index);
-          matchedTextNode.splitText(matchedText.length);
-          var spanNode = document.createElement(HIGHLIGHT_TAG); 
-          spanNode.className = HIGHLIGHT_CLASS;
-          spanNode.style.backgroundColor = highlightColor;
-          spanNode.style.color = textColor;
-          spanNode.appendChild(matchedTextNode.cloneNode(true));
-          matchedTextNode.parentNode.replaceChild(spanNode, matchedTextNode);
-          searchInfo.highlightedNodes.push(spanNode);
-          searchInfo.length += 1;
-          return 1;
-        }
+      var index = node.data.search(regex);
+      if (index >= 0 && node.data.length > 0 && node.textContent.length > 0) {
+        var matchedText = node.data.match(regex)[0];
+        var matchedTextNode = node.splitText(index);
+        matchedTextNode.splitText(matchedText.length);
+        var spanNode = document.createElement(HIGHLIGHT_TAG); 
+        spanNode.className = HIGHLIGHT_CLASS;
+        spanNode.style.backgroundColor = highlightColor;
+        spanNode.style.color = textColor;
+        spanNode.appendChild(matchedTextNode.cloneNode(true));
+        matchedTextNode.parentNode.replaceChild(spanNode, matchedTextNode);
+        searchInfo.highlightedNodes.push(spanNode);
+        searchInfo.length += 1;
+        textContent = regex + ": ";
+        return 1;
       }
     } else if (isExpandable(node)) {
         var children = node.childNodes;
@@ -200,39 +184,107 @@ function validateRegex(pattern) {
 
 /* Find and highlight regex matches in web page from a given regex string or pattern */
 function search(regexString, configurationChanged) {
-  var regex = validateRegex(regexString);
-  if (regex && regexString != '' && (configurationChanged || regexString !== searchInfo.regexString)) { // new valid regex string
-    removeHighlight();
-    chrome.storage.local.get({
-      'highlightColor' : DEFAULT_HIGHLIGHT_COLOR,
-      'selectedColor' : DEFAULT_SELECTED_COLOR,
-      'textColor' : DEFAULT_TEXT_COLOR,
-      'maxResults' : DEFAULT_MAX_RESULTS,
-      'caseInsensitive' : DEFAULT_CASE_INSENSITIVE}, 
-      function(result) {
+  chrome.storage.local.get({
+    'highlightColor' : DEFAULT_HIGHLIGHT_COLOR,
+    'selectedColor' : DEFAULT_SELECTED_COLOR,
+    'textColor' : DEFAULT_TEXT_COLOR,
+    'maxResults' : DEFAULT_MAX_RESULTS,
+    'caseInsensitive' : DEFAULT_CASE_INSENSITIVE,
+    'selectedSearchType': DEFAULT_SEARCH_TYPE},
+    function(result) {
+      var regex = validateRegex(regexString);
+      if (!searching && regex && regexString != '' && (configurationChanged || regexString !== searchInfo.regexString)){ // new valid regex string
+        searching = true;
+        removeHighlight();
         initSearchInfo(regexString);
-        if(result.caseInsensitive){
-          regex = new RegExp(regexString, 'i');
+        switch (result.selectedSearchType){
+          case "Synonym":
+            synonymSearch(regexString, result);
+            break;
+          case "Antonym":
+            antonymSearch(regexString, result);
+            break;
+          default:
+            defaultSearch(regexString, result);
         }
-        highlight(regex, regexString, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
-        selectFirstNode(result.selectedColor);
+      } else if (!searching && regex && regexString != '' && regexString === searchInfo.regexString && !configurationChanged) { // elements are already highlighted
+        selectNextNode(result.highlightColor, result.selectedColor);
+      } else if (regexString == ''){ // blank string or invalid regex
+        removeHighlight();
+        initSearchInfo(regexString);
         returnSearchInfo('search');
       }
-    );
-  } else if (regex && regexString != '' && regexString === searchInfo.regexString) { // elements are already highlighted
-    chrome.storage.local.get({
-      'highlightColor' : DEFAULT_HIGHLIGHT_COLOR,
-      'selectedColor' : DEFAULT_SELECTED_COLOR}, 
-      function(result) {
-        selectNextNode(result.highlightColor, result.selectedColor);
-      }
-    );
-  } else { // blank string or invalid regex
-    removeHighlight();
-    initSearchInfo(regexString);
-    returnSearchInfo('search');
-  }
+    }
+  );
 }
+
+function defaultSearch(regexString, result) {
+  if(result.caseInsensitive){
+    regex = new RegExp(regexString, 'i');
+  } else{
+    regex = new RegExp(regexString);
+  }
+  highlight(regex, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  selectFirstNode(result.selectedColor);
+  returnSearchInfo('search');
+  searching = false;
+}
+
+async function synonymSearch(regexString, result) {
+  const url = new URL("https://api.api-ninjas.com/v1/thesaurus"); 
+  url.searchParams.set("word", regexString);
+  const response = await fetch(url, { headers: { "X-API-Key": "/cUeYXJRNyCaMH7FDK5G9w==Xh7I4HJRi9GstE91" } });
+  const data = await response.json();
+  var regexList = [regexString].concat(data.synonyms.filter(item => !item.includes(regexString)));
+  regexList = regexList.filter(element =>  element !== undefined);
+  regexList = [...new Set(regexList)];
+  if(result.caseInsensitive){
+    regexList = regexList.map(str => new RegExp(str, 'i'));
+  } else{
+    regexList = regexList.map(str => new RegExp(str));
+  }
+  for (const reg of regexList){
+    highlight(reg, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  }
+  selectFirstNode(result.selectedColor);
+  returnSearchInfo('search');
+  searching = false;
+}
+
+async function antonymSearch(regexString, result) {
+  const url = new URL("https://api.api-ninjas.com/v1/thesaurus"); 
+  url.searchParams.set("word", regexString);
+  const response = await fetch(url, { headers: { "X-API-Key": "/cUeYXJRNyCaMH7FDK5G9w==Xh7I4HJRi9GstE91" } });
+  const data = await response.json();
+  var regexList = data.antonyms;
+  regexList = regexList.filter(element =>  element !== undefined);
+  regexList = [...new Set(regexList)];
+  if(result.caseInsensitive){
+    regexList = regexList.map(str => new RegExp(str, 'i'));
+  } else{
+    regexList = regexList.map(str => new RegExp(str));
+  }
+  for (const reg of regexList){
+    highlight(reg, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  }
+  selectFirstNode(result.selectedColor);
+  returnSearchInfo('search');
+  searching = false;
+}
+
+function similarMatchSearch(regexString, result) {
+  if(result.caseInsensitive){
+    regex = new RegExp(regexString, 'i');
+  } else{
+    regex = new RegExp(regexString);
+  }
+  highlight(regex, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  selectFirstNode(result.selectedColor);
+  returnSearchInfo('search');
+  searching = false;
+}
+
+
 /*** FUNCTIONS ***/
 
 /*** LISTENERS ***/
@@ -262,20 +314,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         selectPrevNode(result.highlightColor, result.selectedColor);
       }
     );
-  }
-  else if ('copyToClipboard' == request.message) {
-    var clipboardHelper = document.createElement('textarea');
-    try {
-      var text = searchInfo.highlightedNodes.map(function (n) {
-        return n.innerText;
-      }).join('\n');
-      clipboardHelper.appendChild(document.createTextNode(text));
-      document.body.appendChild(clipboardHelper);
-      clipboardHelper.select();
-      document.execCommand('copy');
-    } finally {
-      document.body.removeChild(clipboardHelper);
-    }
   }
   /* Received getSearchInfo message, return search information for this tab */
   else if ('getSearchInfo' == request.message) {

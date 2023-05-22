@@ -1,13 +1,11 @@
 /*** CONSTANTS ***/
 var DEFAULT_MAX_RESULTS = 500;
 var DEFAULT_HIGHLIGHT_COLOR = '#ffff00';
-var DEFAULT_SELECTED_COLOR = '#ff9900';
+var DEFAULT_SELECTED_COLOR = '#2547da';
 var DEFAULT_TEXT_COLOR = '#000000';
-var DEFAULT_MAX_HISTORY_LENGTH = 30;
 var WHITE_COLOR = '#ffffff';
 var ERROR_COLOR = '#ff8989';
 var GOOD_COLOR = '#89ff89';
-var DEFAULT_INSTANT_RESULTS = true;
 /*** CONSTANTS ***/
 
 /*** FUNCTIONS ***/
@@ -55,7 +53,7 @@ function saveOptions() {
       'textColor' : document.getElementById('textColor').value,
       'maxResults' : maxResults,
       'instantResults' :  document.getElementById('instantResults').checked,
-      'maxHistoryLength' : document.getElementById('maxHistoryLength').value
+      'maxMenuLength' : document.getElementById('maxMenuLength').value
     }
     
     chrome.storage.local.set(options, function() {
@@ -72,7 +70,7 @@ function loadOptions() {
     'textColor' : DEFAULT_TEXT_COLOR,
     'maxResults' : DEFAULT_MAX_RESULTS,
     'instantResults' : DEFAULT_INSTANT_RESULTS,
-    'maxHistoryLength' : DEFAULT_MAX_HISTORY_LENGTH }, 
+    'maxMenuLength' : DEFAULT_MAX_HISTORY_LENGTH }, 
     function(result) {
       document.getElementById('highlightColor').value = result.highlightColor;
       document.getElementById('exampleHighlighted').style.backgroundColor = result.highlightColor;
@@ -83,7 +81,7 @@ function loadOptions() {
       document.getElementById('exampleSelected').style.color = result.textColor;
       document.getElementById('maxResults').value = result.maxResults;
       document.getElementById('instantResults').checked = result.instantResults;
-      document.getElementById('maxHistoryLength').value = result.maxHistoryLength;
+      document.getElementById('maxMenuLength').value = result.maxMenuLength;
     }
   );
 }
@@ -125,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     saveOptions();
   });
 
-  document.getElementById('maxHistoryLength').addEventListener('change', function() {
+  document.getElementById('maxMenuLength').addEventListener('change', function() {
     saveOptions();
   });
   

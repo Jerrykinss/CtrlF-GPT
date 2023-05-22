@@ -33,13 +33,7 @@
        -webkit-box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
                box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
       }
-      #insensitive {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #clear {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #show-history {
+      #show-menu {
         -webkit-text-stroke: 0px;
       }
       .flexContainer {
@@ -57,7 +51,7 @@
       #numResults {
         position: absolute;
         top: 0.25em;
-        right: 14.5em;
+        right: 7.5em;
         min-width: 4em;
         max-width: 5em;
         overflow:auto;
@@ -65,34 +59,30 @@
         height: 1.6;
         font-size: 10pt;
       }
-      #history {
+      #menu {
         margin: 4px 2px;
         display: none;
       }
-      .historyDeleteEntry {
-        color: #c00;
-        cursor: pointer;
-        margin-right: 4px;
-        font-size: 0.8em;
-      }
-      .historyLink {
-        color: #09d;
-        cursor: pointer;
-      }
-      .historyIsEmptyMessage {
-        font-style: italic;
-        color: #555;
-      }
-      
-      .clearHistoryButton {
+      #insensitive {
         color: #000; 
         text-decoration: none;
         float: left !important;
-        width: 7em !important;
+        width: 5em !important;
         -webkit-text-stroke: 0.5px rgba(0,0,0,1) !important;
-        margin-bottom: 0.2em;
+        margin-bottom: 0.5em;
       }
-
+      #search_type {
+        margin-left: 1em !important;
+        width: 15em !important;
+        height: 1.8em !important;
+        font-size: 14px;
+        float: right;
+      }
+      .selected {
+        background-color: blue;
+        color: white;
+        font-weight: bold;
+      }
       body {
         background-color: #dddddd;
       }
@@ -106,12 +96,15 @@
       <input id="inputRegex" type="text" name="inputRegex"></input><span id="numResults"></span>
       <a href="#" id="prev" type="button" title="Previous Match"><i class="fa fa-angle-up"></i></a>
       <a href="#" id="next" type="button" title="Next Match"><i class="fa fa-angle-down"></i></a>
-      <a href="#" id="insensitive" type="button" title="Case Insensitive"><i class="fa fa-info"></i></a>
-      <a href="#" id="copy-to-clipboard" type="button" title="Copy matches to clipboard"><i class="fa fa-copy"></i></a>
-      <a href="#" id="clear" type="button" title="Clear"><i class="fa fa-trash-o"></i></a>
-      <a href="#" class="selected" id="show-history" type="button" title="History"><i class="fa fa-history"></i></a>
+      <a href="#" id="show-menu" type="button" title="Menu"><i class="fa fa-bars"></i></a>
     </div>
-    <div id="history">
+    <div id="menu">
+      <a href="#" id="insensitive" type="button" title="Case Insensitive"><i class="fa fa-info"></i></a>
+      <select id="search_type">
+        <option value="Default">Default</option>
+        <option value="Synonym">Synonym</option>
+        <option value="Antonym">Antonym</option>
+      </select>
     </div>
     <span id="error" class="error-chrome-regex"></span>
   </body>
