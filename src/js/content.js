@@ -16,6 +16,8 @@ var DEFAULT_SEARCH_TYPE = "Default";
 /*** VARIABLES ***/
 var searchInfo;
 var searching = false;
+var embed = null;
+var knn = null;
 /*** VARIABLES ***/
                      
 /*** LIBRARY FUNCTIONS ***/
@@ -37,8 +39,17 @@ function initSearchInfo(pattern) {
     regexString : pattern,
     selectedIndex : 0,
     highlightedNodes : [],
-    length : 0
+    length : 0,
   }
+}
+
+function initScripts() {
+  const scripts = ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js', 'https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder', 'https://cdn.jsdelivr.net/npm/ml-knn@3.0.0'];
+  scripts.forEach((scriptUrl) => {
+    const script = document.createElement('script');
+    script.src = scriptUrl;
+    document.head.appendChild(script);
+  });
 }
 
 /* Send message with search information for this tab */
@@ -48,7 +59,7 @@ function returnSearchInfo(cause) {
     'regexString' : searchInfo.regexString,
     'currentSelection' : searchInfo.selectedIndex,
     'numResults' : searchInfo.length,
-    'cause' : cause
+    'cause' : cause,
   });
 }
 
@@ -204,6 +215,9 @@ function search(regexString, configurationChanged) {
           case "Antonym":
             antonymSearch(regexString, result);
             break;
+          case "Similar Match":
+            similarMatchSearch(regexString, result);
+            break;
           default:
             defaultSearch(regexString, result);
         }
@@ -273,15 +287,90 @@ async function antonymSearch(regexString, result) {
 }
 
 function similarMatchSearch(regexString, result) {
-  if(result.caseInsensitive){
-    regex = new RegExp(regexString, 'i');
-  } else{
-    regex = new RegExp(regexString);
+  if (knn === null) {
+    const textContent = getTextContent();
+    const chunks = textToChunks(textContent);
+    const embeddings = getTextEmbeddings(chunks);
+    fit(embeddings);
   }
-  highlight(regex, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  const qChunks = textToChunks(regexString);
+  const qEmbeddings = getTextEmbeddings(qChunks);
+  var ans = knn.predict(qEmbeddings);
+  ans.forEach(function(index) {
+    var output = embed[index];
+    var regex = new RegExp(output, 'i');
+    highlight(regex, result.highlightColor, result.selectedColor, result.textColor, result.maxResults);
+  });
   selectFirstNode(result.selectedColor);
   returnSearchInfo('search');
   searching = false;
+}
+
+function getTextContent() {
+  function getTextRecursive(node, text) {
+    if (isTextNode(node)) {
+      if (node.data.length > 0 && node.textContent.length > 0) {
+        return node.textContent;
+      }
+    } else if (isExpandable(node)) {
+        var children = node.childNodes;
+        for (var i = 0; i < children.length; ++i) {
+          var child = children[i];
+          var text = "";
+          text += getTextRecursive(child);
+          return text;
+        }
+    }
+    return 0;
+  }
+  var textContent = getTextRecursive(document.getElementsByTagName('body')[0]);
+  return textContent;
+};
+
+function textToChunks(text, wordLength = 150) {
+  const textToks = [text.split(' ')];
+  const chunks = [];
+  for (let idx = 0; idx < textToks.length; idx++) {
+    const words = textToks[idx];
+    for (let i = 0; i < words.length; i += wordLength) {
+      let chunk = words.slice(i, i + wordLength);
+      if (
+        (i + wordLength) > words.length &&
+        chunk.length < wordLength &&
+        textToks.length !== (idx + 1)
+      ) {
+        textToks[idx + 1] = chunk.concat(textToks[idx + 1]);
+        continue;
+      }
+      chunk = chunk.join(' ').trim();
+      chunks.push(chunk);
+    }
+  }
+  return chunks;
+}
+
+async function getTextEmbeddings(chunks, batch = 1000) {
+  const encoder = await use.load();
+  const embeddings = [];
+  for (let i = 0; i < chunks.length; i += batch) {
+    const textBatch = chunks.slice(i, i + batch);
+    const embBatch = await encoder.embed(textBatch);
+    embeddings.push(embBatch);
+  }
+  const embeddingsArray = await Promise.all(embeddings);
+  const concatenatedEmbeddings = tf.concat(embeddingsArray);
+  const embeddingsData = await concatenatedEmbeddings.array();
+  return embeddingsData;
+}
+
+async function fit(embeddings, nNeighbors = 5) {
+  embed = embeddings;
+  const nNeighbors = Math.min(nNeighbors, embeddings.length);
+  var indices = [];
+  for (let i = 0; i < embeddings.length; i++) {
+    indices.push(i);
+  }
+  knn = new KNN(embeddings, indices, { k: nNeighbors });
 }
 
 
@@ -326,4 +415,5 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 
 /*** INIT ***/
 initSearchInfo();
+initScripts();
 /*** INIT ***/
