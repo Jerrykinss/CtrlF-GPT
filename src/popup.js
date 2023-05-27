@@ -238,4 +238,3 @@ window.setTimeout(
 setCaseInsensitiveElement();
 setSearchType();
 /*** INIT ***/
-

@@ -3,20 +3,15 @@
 
   "name": "Chrome Regex Search - Personal",
   "description": "An extension for Regex Search in lieu of Chrome's CTRL+F",
-  "version": "1.0.8",
+  "version": "1.0.0",
   "icons": {
-    "16": "icons/icons_16.png",
-    "24": "icons/icons_24.png",
-    "32": "icons/icons_32.png",
-    "48": "icons/icons_48.png",
-    "64": "icons/icons_64.png",
-    "72": "icons/icons_72.png",
-    "96": "icons/icons_96.png",
-    "128": "icons/icons_128.png",
-    "256": "icons/icons_256.png"
+    "16": "icons/icon_16.png",
+    "32": "icons/icon_32.png",
+    "48": "icons/icon_48.png",
+    "128": "icons/icon_128.png"
   },
   "action": {
-    "default_icon": "icons/icons_32.png",
+    "default_icon": "icons/icon_32.png",
     "default_popup": "popup.html",
     "browser_style": true
   },
@@ -25,12 +20,12 @@
     "storage"
   ],
   "background": {
-    "service_worker": "js/background.js"
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": [ "http://*/*", "https://*/*", "file://*/*" ],
-      "js": [ "js/content.js" ]
+      "js": ["contentScript.js"]
     }
   ],
   "commands": {
@@ -41,6 +36,5 @@
         "mac": "MacCtrl+Shift+F"
       }
     }
-  },
-  "options_page": "options.html"
+  }
 }
