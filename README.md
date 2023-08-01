@@ -1,6 +1,6 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Ctrl-F GPT: Multifunctional Search Extension for Browser
+# <img src="public/icons/icon_48.png" width="45" align="left"> Ctrl-F GPT: Multifunctional Search for Browser
 
-An extension enabling multiple types of searches to highlight matches on a web page.
+An extension enabling multiple types of searches for highlighting matches on a web page, in place of Chrome's CTRL+F.
 
 Search the information available on a webpage with natural language queries instead of exact string matches, powered by OpenAI models. Match using regular expressions. Include synonyms and antonyms for keywords in search results. Return unexact matches in the webpage with high text similarity. Toggle case sensitivity.
 
