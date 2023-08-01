@@ -1,19 +1,29 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Ctrlf Gpt
+# <img src="public/icons/icon_48.png" width="45" align="left"> Ctrl-F GPT: Multifunctional Search Extension for Browser
 
-My Chrome Extension
+An extension enabling multiple types of searches to highlight matches on a web page.
+
+Search the information available on a webpage with natural language queries instead of exact string matches, powered by OpenAI models. Match using regular expressions. Include synonyms and antonyms for keywords in search results. Return unexact matches in the webpage with high text similarity. Toggle case sensitivity.
 
 ## Features
 
-- Feature 1
-- Feature 2
+- Semantic Search (Powered by ChatGPT)
+- Regex Search
+- Synonym Search
+- Antonym Search
+- Similar Match Search
+- More features to come
 
 ## Install
 
-[**Chrome** extension]() <!-- TODO: Add chrome extension link inside parenthesis -->
+[**Chrome** extension]()
+
+## Keyboard Shortcuts
+ENTER : select next match on page
+SHIFT+ENTER : select previous match on page
 
 ## Contribution
 
-Suggestions and pull requests are welcomed!.
+Suggestions and pull requests are welcomed.
 
 ---
 
