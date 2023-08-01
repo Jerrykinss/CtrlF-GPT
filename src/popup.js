@@ -12,6 +12,7 @@ var HISTORY_IS_EMPTY_TEXT = "Search menu is empty.";
 var CLEAR_ALL_HISTORY_TEXT = "Clear Menu";
 var DEFAULT_CASE_INSENSITIVE = false;
 var DEFAULT_SEARCH_TYPE = "Default";
+var DEFAULT_KEY = "";
 /*** CONSTANTS ***/
 
 /*** VARIABLES ***/
@@ -59,10 +60,9 @@ function selectPrev(){
 // }
 
 function passInputToContentScript(){
-  console.log(1);
   if (!processingKey) {
-    var regexString = document.getElementById('inputRegex').value;
-    document.getElementById('inputRegex').style.backgroundColor = WHITE_COLOR;
+    var regexString = document.getElementById('inputText').value;
+    document.getElementById('inputText').style.backgroundColor = WHITE_COLOR;
     chrome.tabs.query(
       { 'active': true, 'currentWindow': true },
       function(tabs) {
@@ -83,45 +83,35 @@ function passInputToContentScript(){
 }
 
 function setMenuVisibility(makeVisible) {
+  toggleSearchType()
   document.getElementById('menu').style.display = makeVisible ? 'block' : 'none';
-  document.getElementById('show-menu').title = makeVisible ? HIDE_HISTORY_TITLE : SHOW_HISTORY_TITLE;
-  if(makeVisible) {
-    document.getElementById('show-menu').className = 'selected';
-  } else {
-    document.getElementById('show-menu').className = '';
-  }
+  document.getElementById('show-menu').className = makeVisible ? 'selected' : '';
 }
 
 function setCaseInsensitiveElement() {
   var caseInsensitive = chrome.storage.local.get({'caseInsensitive':DEFAULT_CASE_INSENSITIVE},
   function (result) {
-    document.getElementById('insensitive').title = result.caseInsensitive ? DISABLE_CASE_INSENSITIVE_TITLE : ENABLE_CASE_INSENSITIVE_TITLE;
-    if(result.caseInsensitive) {
-      document.getElementById('insensitive').className = 'selected';
-    } else {
-      document.getElementById('insensitive').className = '';
-    }
+    document.getElementById('insensitive').checked = result.caseInsensitive ? true : false;
   });
 }
 
 function toggleCaseInsensitive() {
-  var caseInsensitive = document.getElementById('insensitive').className == 'selected';
-  document.getElementById('insensitive').title = caseInsensitive ? ENABLE_CASE_INSENSITIVE_TITLE : DISABLE_CASE_INSENSITIVE_TITLE;
-  if(caseInsensitive) {
-    document.getElementById('insensitive').className = '';
-  } else {
-    document.getElementById('insensitive').className = 'selected';
-  }
+  var caseInsensitive = document.getElementById('insensitive').checked;
   sentInput = false;
   configurationChanged = true;
-  chrome.storage.local.set({caseInsensitive: !caseInsensitive});
+  chrome.storage.local.set({caseInsensitive: caseInsensitive});
 }
 
 function setSearchType() {
   var selectedSearchType = chrome.storage.local.get({'selectedSearchType':DEFAULT_SEARCH_TYPE},
   function(result) {
     document.getElementById("search_type").value = result.selectedSearchType;
+    const displayStyle = selectedSearchType === "Semantic Search" ? "block" : "none";
+    document.getElementById('openAIKey').style.display = displayStyle;
+    document.getElementById('keyLabel').style.display = displayStyle;
+    document.getElementById('confirmKey').style.display = displayStyle;
   });
+  setAIKey()
 }
 
 function toggleSearchType() {
@@ -129,6 +119,33 @@ function toggleSearchType() {
   sentInput = false;
   configurationChanged = true;
   chrome.storage.local.set({selectedSearchType: selectedSearchType});
+  const displayStyle = selectedSearchType === "Semantic Search" ? "block" : "none";
+  document.getElementById('openAIKey').style.display = displayStyle;
+  document.getElementById('keyLabel').style.display = displayStyle;
+  document.getElementById('confirmKey').style.display = displayStyle;
+  setAIKey()
+}
+
+function setAIKey() {
+  var openAIKey = chrome.storage.local.get({'openAIKey':DEFAULT_KEY},
+  function(result) {
+    document.getElementById("openAIKey").value = result.openAIKey;
+    const empty = result.openAIKey === DEFAULT_KEY;
+    document.getElementById("openAIKey").readOnly = empty ? false : true;
+    document.getElementById("openAIKey").style.backgroundColor = empty ? 'white' : 'lightgrey';
+    document.getElementById('confirmKey').className = empty ? '' : 'selected';
+  });
+}
+
+function toggleAIKey() {
+  sentInput = false;
+  configurationChanged = true;
+  document.getElementById("openAIKey").readOnly = !document.getElementById("openAIKey").readOnly;
+  var keySet = document.getElementById('confirmKey').className == 'selected';
+  document.getElementById('confirmKey').className = keySet ? '' : 'selected';
+  document.getElementById("openAIKey").style.backgroundColor = keySet ? 'white' : 'lightgrey';
+  var openAIKey = document.getElementById("openAIKey").value;
+  chrome.storage.local.set({openAIKey: openAIKey});
 }
 
 
@@ -154,6 +171,10 @@ document.getElementById("search_type").addEventListener("change", function() {
   toggleSearchType();
 });
 
+document.getElementById("confirmKey").addEventListener("click", function() {
+  toggleAIKey()
+});
+
 /* Received returnSearchInfo message, populate popup UI */ 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if ('returnSearchInfo' == request.message) {
@@ -164,9 +185,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       document.getElementById('numResults').textContent = String(request.currentSelection) + ' of ' + String(request.numResults);
     }
     if (!sentInput) {
-      document.getElementById('inputRegex').value = request.regexString;
+      document.getElementById('inputText').value = request.regexString;
     }
-    if (request.regexString !== document.getElementById('inputRegex').value) {
+    if (request.regexString !== document.getElementById('inputText').value) {
       passInputToContentScript();
     }
   }
@@ -178,7 +199,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 var map = [];
 onkeydown = onkeyup = function(e) {
     map[e.keyCode] = e.type == 'keydown';
-    if (document.getElementById('inputRegex') === document.activeElement) { //input element is in focus
+    if (document.getElementById('inputText') === document.activeElement) { //input element is in focus
       if (!map[16] && map[13]) { //ENTER
         if (sentInput) {
           selectNext();
@@ -198,12 +219,10 @@ onkeydown = onkeyup = function(e) {
 chrome.storage.local.get({
     'isSearchMenuVisible' : false},
   function(result) {
-    document.getElementById('inputRegex').addEventListener('change', function() {
-      console.log(9);
+    document.getElementById('inputText').addEventListener('change', function() {
       passInputToContentScript();
     });
     console.log(result);
-    setMenuVisibility(result.isSearchMenuVisible);
   }
 );
 
@@ -229,12 +248,12 @@ function(tabs) {
 });
 
 /* Focus onto input form */
-document.getElementById('inputRegex').focus();
+document.getElementById('inputText').focus();
 window.setTimeout( 
-  function(){document.getElementById('inputRegex').select();}, 0);
+  function(){document.getElementById('inputText').select();}, 0);
 //Thanks to http://stackoverflow.com/questions/480735#comment40578284_14573552
 
-
+document.getElementById('menu').style.display = 'none';
 setCaseInsensitiveElement();
 setSearchType();
 /*** INIT ***/

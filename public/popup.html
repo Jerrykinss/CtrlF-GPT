@@ -41,7 +41,7 @@
         text-align: right;
         display: flex;
       }
-      #inputRegex {
+      #inputText {
         width: 22em;
         border-radius: 2px;
         padding-right: 5em;
@@ -61,25 +61,55 @@
       }
       #menu {
         margin: 4px 2px;
-        display: none;
+        display: flex;
+        align-items: center;
+        position: relative;
+        text-align: center;
+        gap: 10px;
       }
       #insensitive {
-        color: #000; 
-        text-decoration: none;
         float: left !important;
-        width: 5em !important;
-        -webkit-text-stroke: 0.5px rgba(0,0,0,1) !important;
+        height: 1.2em !important;
+        width: 1.2em !important;
+        margin-left: 1em;
+        margin-right: 2em;
         margin-bottom: 0.5em;
       }
       #search_type {
         margin-left: 1em !important;
         width: 15em !important;
-        height: 1.8em !important;
-        font-size: 14px;
-        float: right;
+        height: 1.6em !important;
+        font-size: 13px;
+        float: left;
+        margin-bottom: 0.5em;
+      }
+      #label {
+        float: left;
+      }
+      #keyLabel {
+        float: left;
+      }
+      #openAIKey {
+        width: 28em;
+        height: 1.3em;
+        padding-right: 2em;
+        margin-left: 1em;
+        float: left;
+        font-size: 11px;
+      }
+      #confirmKey {
+        padding-right: 1.3em;
+        float: left !important;
+        margin-left: 0.5em;
+        margin-right: 0.5em;
+        margin-bottom: 0.5em;
+        color: #000; 
+        text-decoration: none;
+        width: 1.8em !important;
+        -webkit-text-stroke: 0.5px rgba(0,0,0,1) !important;
       }
       .selected {
-        background-color: blue;
+        background-color: lightgrey;
         color: white;
         font-weight: bold;
       }
@@ -93,19 +123,26 @@
   </head>
   <body>
     <div class="flexContainer">
-      <input id="inputRegex" type="text" name="inputRegex"></input><span id="numResults"></span>
+      <input id="inputText" type="text" name="inputText"></input><span id="numResults"></span>
       <a href="#" id="prev" type="button" title="Previous Match"><i class="fa fa-angle-up"></i></a>
       <a href="#" id="next" type="button" title="Next Match"><i class="fa fa-angle-down"></i></a>
       <a href="#" id="show-menu" type="button" title="Menu"><i class="fa fa-bars"></i></a>
     </div>
     <div id="menu">
-      <a href="#" id="insensitive" type="button" title="Case Insensitive"><i class="fa fa-info"></i></a>
+      <label id="label">Case Insensitive:</label>
+      <input id="insensitive" type="checkbox">
+      <label id="label">Search Type:</label>
       <select id="search_type">
         <option value="Default">Default</option>
+        <option value="Regex">Regex</option>
         <option value="Synonym">Synonym</option>
         <option value="Antonym">Antonym</option>
         <option value="Similar Match">Similar Match</option>
+        <option value="Semantic Search">Semantic Search</option>
       </select>
+      <label id="keyLabel">OpenAI Key:</label>
+      <input id="openAIKey" type="text" name="openAIKey" maxlength="60">
+      <button id="confirmKey" type="button" title="Confirm"><i class="fa fa-check"></i></a>
     </div>
     <span id="error" class="error-chrome-regex"></span>
   </body>
