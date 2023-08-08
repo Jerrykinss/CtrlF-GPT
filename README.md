@@ -20,9 +20,11 @@ Search the information available on a webpage with natural language queries inst
 | *Synonym Search* |  
 <br />
 | <img src="public/assets/Screenshot 2.png"  width="800"> |
+|:--:|
 | *Semantic Search* |  
 <br />
 | <img src="public/assets/Screenshot 3.png"  width="800"> |
+|:--:|
 | *Similar Match Search* |  
 <br />
 
