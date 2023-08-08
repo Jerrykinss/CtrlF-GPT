@@ -55,9 +55,6 @@ function selectPrev(){
 }
 
 /* Send message to pass input string to content script of tab to find and highlight regex matches */
-// function passInputToContentScript(){
-//   passInputToContentScript(false);
-// }
 
 function passInputToContentScript(){
   if (!processingKey) {
